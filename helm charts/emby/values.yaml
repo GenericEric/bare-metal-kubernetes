@@ -1,0 +1,126 @@
+#
+# IMPORTANT NOTE
+#
+# This chart inherits from the common library chart from the people at k8s-at-home. You can check the default values/options here:
+# https://github.com/k8s-at-home/library-charts/tree/main/charts/stable/common/values.yaml
+#
+
+image:
+  # -- image repository
+  # repository: ghcr.io/k8s-at-home/emby
+  repository: linuxserver/emby
+  # -- image pull policy
+  pullPolicy: IfNotPresent
+  # -- image tag
+  # tag: v4.6.1.0
+  tag: latest
+
+# -- environment variables. See more environment variables in the [emby documentation](https://emby.org/docs)
+# @default -- See below
+env:
+  # -- Set the container timezone
+  TZ: "America/Chicago"
+  # HIP_VISIBLE_DEVICES: 0
+
+## -- Section for assigning Emby to a worker with an AMD gpu installed. 
+##    See: https://github.com/RadeonOpenCompute/k8s-device-plugin
+# resources:
+#   limits:
+#     amd.com/gpu: 1 # requesting a GPU
+
+## -- Selects the node with a tag of "type=gpu"
+# nodeSelector:
+#     type: gpu
+
+
+# -- Configures service settings for the chart.
+# @default -- See values.yaml
+service:
+  main:
+    ports:
+      http:
+        port: 8096
+      https:
+        enabled: true
+        port: 8920
+
+ingress:
+  # -- Enable and configure ingress settings for the chart under this key. If using Istio, leave false.
+  # @default -- See values.yaml
+  main:
+    enabled: false
+    hosts:
+      - host: emby.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              port: 8096
+
+
+    # -- Configure persistence settings for the chart under this key.
+    # The media volume will be a normal directory on the node the pod is running. If this is a network share,
+    # like nfs, it will have to be mounted on each node the pod can be assigned to. The config volume
+    # is a normal volume stored on the nfs server.
+# @default -- See values.yaml
+persistence:
+  config:
+    enabled: true
+    mountPath: /config
+    size: 100Gi
+    storageClassName: managed-nfs-storage
+    accessModes: ReadWriteOnce
+  media:
+    enabled: true
+    type: hostPath
+    hostPath: /mnt/media
+    mountPath: /media
+
+# -- Sometimes everything doesn't go so well and you need time to tinker without your pods being restarted.
+# In that case you may want to disable probes temporarily. 
+probes:
+  # -- Liveness probe configuration
+  # @default -- See below
+  liveness:
+    # -- Enable the liveness probe
+    enabled: true
+    # -- Set this to `true` if you wish to specify your own livenessProbe
+    custom: false
+    # -- The spec field contains the values for the default livenessProbe.
+    # If you selected `custom: true`, this field holds the definition of the livenessProbe.
+    # @default -- See below
+    spec:
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 1
+      failureThreshold: 3
+
+  # -- Redainess probe configuration
+  # @default -- See below
+  readiness:
+    # -- Enable the readiness probe
+    enabled: true
+    # -- Set this to `true` if you wish to specify your own readinessProbe
+    custom: false
+    # -- The spec field contains the values for the default readinessProbe.
+    # If you selected `custom: true`, this field holds the definition of the readinessProbe.
+    # @default -- See below
+    spec:
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 1
+      failureThreshold: 3
+
+  # -- Startup probe configuration
+  # @default -- See below
+  startup:
+    enabled: true
+    custom: false
+    spec:
+      httpGet:
+        path: /
+        port: 8096
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 1
+      failureThreshold: 30
