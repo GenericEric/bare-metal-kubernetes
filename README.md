@@ -6,6 +6,6 @@
 
 
 
-### Find me: ![logo](./logo100x100.png =20x20)
+### Find me: ![logo]("logo100x100.png" =20x20)
 #### [youtube](https://www.youtube.com/genericeric)
 #### [odysee](https://odysee.com/@GenericEric:5)
