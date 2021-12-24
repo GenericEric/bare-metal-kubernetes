@@ -1,1 +1,0 @@
-helm install emby k8s-at-home/emby -f values.yaml
